@@ -17,10 +17,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void register(View view) {
-
         Log.d(LOG_TAG, "Button clicked!");
         Intent intent = new Intent(this, Register.class);
         startActivity(intent);
-
     }
 }
