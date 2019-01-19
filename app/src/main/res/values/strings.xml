@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Insta</string>
+    <string name="log_in">Log in</string>
 </resources>

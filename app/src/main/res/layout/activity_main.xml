@@ -71,12 +71,13 @@
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:background="@android:color/darker_gray"
-        android:text="Log in"
+        android:text="@string/log_in"
         android:textColor="@android:color/white"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editText5" />
+        app:layout_constraintTop_toBottomOf="@+id/editText5"
+        android:onClick="register"/>
 
     <Button
         android:id="@+id/signup"
