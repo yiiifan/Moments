@@ -9,20 +9,22 @@
     <TextView
         android:id="@+id/title2"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="75dp"
         android:layout_margin="0dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
-        android:background="@android:color/darker_gray"
+        android:background="@drawable/title"
         android:paddingLeft="32dp"
         android:paddingTop="16dp"
         android:paddingBottom="16dp"
         android:text="Register"
+        android:textAllCaps="true"
         android:textColor="@android:color/background_light"
-        android:textSize="25sp"
+        android:textSize="30sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -109,32 +111,35 @@
 
     <Button
         android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="109dp"
+        android:layout_height="47dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="32dp"
         android:layout_marginRight="32dp"
         android:layout_marginBottom="8dp"
-        android:background="@android:color/darker_gray"
+        android:background="@drawable/button2"
+        android:onClick="profile"
         android:padding="8dp"
+        android:shadowColor="@android:color/white"
         android:text="SIGN UP"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bio"
-        android:onClick="profile"/>
+        app:layout_constraintTop_toBottomOf="@+id/bio" />
 
     <ImageButton
         android:id="@+id/img"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="74dp"
+        android:layout_height="72dp"
         android:layout_marginTop="64dp"
+        android:background="@android:color/background_light"
+        android:onClick="camera"
+        android:scaleType="centerInside"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title2"
-        app:srcCompat="@mipmap/ic_launcher"
-        android:onClick="camera"/>
+        app:srcCompat="@drawable/camera" />
 
 </android.support.constraint.ConstraintLayout>

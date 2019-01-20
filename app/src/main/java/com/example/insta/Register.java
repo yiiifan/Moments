@@ -45,11 +45,11 @@ public class Register extends AppCompatActivity {
         String username_string = username_view.getText().toString();
         String bio_string = bio_view.getText().toString();
         if(byteArray == null){
-            showToast(view, "Please upload your photo!");
+            showToast(view, "Please upload your photo");
         }else if(username_string.length() == 0){
-            showToast(view, "Please fill your username!");
+            showToast(view, "Please fill your username");
         }else if(bio_string.length() == 0){
-            showToast(view, "Please fill your short bio!");
+            showToast(view, "Please fill your short bio");
         }else {
             intent.putExtra(username, username_string);
             intent.putExtra(bio, bio_string);
