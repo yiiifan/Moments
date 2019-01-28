@@ -110,7 +110,7 @@
         app:layout_constraintTop_toBottomOf="@+id/username" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/signup"
         android:layout_width="109dp"
         android:layout_height="47dp"
         android:layout_marginTop="8dp"
@@ -118,7 +118,6 @@
         android:layout_marginRight="32dp"
         android:layout_marginBottom="8dp"
         android:background="@drawable/button2"
-        android:onClick="profile"
         android:padding="8dp"
         android:shadowColor="@android:color/white"
         android:text="SIGN UP"
