@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Adapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -73,6 +75,10 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
     private Uri photoURI;
 
     private RecyclerView mRecycleView;
+    private FloatingActionButton mMenu;
+    private FloatingActionButton mCamera;
+    private FloatingActionButton mFolder;
+    private FloatingActionButton mLogout;
 
 
 
@@ -81,13 +87,24 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+        mMenu = findViewById(R.id.btn_menu);
+        mCamera= findViewById(R.id.btn_camera);
+        mFolder= findViewById(R.id.btn_folder);
+        mLogout= findViewById(R.id.btn_logout);
+
+        mCamera.hide();
+        mFolder.hide();
+        mLogout.hide();
+
+        // Button views
+        findViewById(R.id.btn_menu).setOnClickListener(this);
+        findViewById(R.id.btn_camera).setOnClickListener(this);
+        findViewById(R.id.btn_folder).setOnClickListener(this);
+        findViewById(R.id.btn_logout).setOnClickListener(this);
+
         mRecycleView = findViewById(R.id.gallery);
         mRecycleView.setLayoutManager(new LinearLayoutManager(this));
         ButterKnife.bind(this);
-
-        //Buttons
-        findViewById(R.id.logout).setOnClickListener(this);
-        findViewById(R.id.add).setOnClickListener(this);
 
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseFirestore.getInstance();
@@ -105,11 +122,26 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         int i = v.getId();
-        if (i == R.id.logout) {
+        if (i == R.id.btn_menu) {
+            if(mCamera.isShown() && mFolder.isShown() && mLogout.isShown()){
+                mCamera.hide();
+                mFolder.hide();
+                mLogout.hide();
+            }else{
+                mCamera.show();
+                mFolder.show();
+                mLogout.show();
+            }
+
+        }else if(i == R.id.btn_camera){
+            dispatchTakePictureIntent();
+
+        }else if(i == R.id.btn_folder){
+
+        }else if(i == R.id.btn_logout){
             FirebaseAuth.getInstance().signOut();
             goWelcome();
-        }else if(i == R.id.add){
-            dispatchTakePictureIntent();
+
         }
     }
 
