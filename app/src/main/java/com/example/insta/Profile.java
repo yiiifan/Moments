@@ -133,6 +133,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
                             Log.d(TAG,"photolist size: "+photoList.size());
                             PhotoRecycleView myAdapter = new PhotoRecycleView(Profile.this, photoList);
                             mRecycleView.setLayoutManager(new GridLayoutManager(Profile.this, 3));
+
                             mRecycleView.setAdapter(myAdapter);
                         } else {
                             Log.w(TAG, "Error getting documents.", task.getException());
