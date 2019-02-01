@@ -2,7 +2,7 @@ package com.example.insta;
 
 import android.net.Uri;
 
-public class photoModel {
+public class photoModel extends RecyclerViewItem{
     private String pID;
     private String url;
     private String location;

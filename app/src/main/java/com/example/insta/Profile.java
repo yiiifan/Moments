@@ -9,11 +9,13 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.menu.MenuAdapter;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -44,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import butterknife.ButterKnife;
@@ -53,9 +56,9 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int CAMERA_REQUEST_CODE = 1;
 
-    private TextView mUsernameField;
-    private TextView mBioField;
-    private ImageView mAvatar;
+    private String username;
+    private String bio;
+    private String avatar;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mDatabase;
@@ -70,8 +73,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
     private Uri photoURI;
 
     private RecyclerView mRecycleView;
-    private FirestoreRecyclerAdapter mAdapter;
-    LinearLayoutManager linearLayoutManager;
+
 
 
     @Override
@@ -79,13 +81,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        //Views
-        mUsernameField = findViewById(R.id.username);
-        mBioField = findViewById(R.id.bio);
-        mAvatar = findViewById(R.id.img);
-
         mRecycleView = findViewById(R.id.gallery);
-        mRecycleView.setHasFixedSize(true);
         mRecycleView.setLayoutManager(new LinearLayoutManager(this));
         ButterKnife.bind(this);
 
@@ -102,8 +98,8 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         FirebaseUser user = mAuth.getCurrentUser();
         uid = user.getUid();
 
-        showProfile();
-        loadGallery();
+        initRecyclerView();
+
     }
 
     @Override
@@ -117,29 +113,86 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         }
     }
 
-    public void loadGallery(){
+    private void initRecyclerView() {
+        final List<RecyclerViewItem> recyclerViewItems = new ArrayList<>();
+
+        //Download username and bio
+        DocumentReference docRef = mDatabase.collection("users").document(uid);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        username = (String)document.get("username");
+                        bio = (String)document.get("bio");
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+
+        // Download avatar from Storage
+        String path = uid.concat("/avatar/avatar.png");
+        mStorageRef.child(path).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                // Got the download URL for 'users/me/profile.png'
+                Log.d(TAG,"Got the download URL");
+                avatar = uri.toString();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle any errors
+                Log.d(TAG,"Fail to got the download URL");
+            }
+        });
+
+        // Download all photos
         mDatabase.collection("users").document(uid).collection("Photos")
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
-                            final ArrayList<photoModel> photoList = new ArrayList<>();
+
+                            Header header = new Header(username, bio, avatar);
+                            recyclerViewItems.add(header);
+
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                 photoModel model = new photoModel(document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"));
-                                photoList.add(model);
+                                recyclerViewItems.add(model);
                             }
-                            Log.d(TAG,"photolist size: "+photoList.size());
-                            PhotoRecycleView myAdapter = new PhotoRecycleView(Profile.this, photoList);
-                            mRecycleView.setLayoutManager(new GridLayoutManager(Profile.this, 3));
 
-                            mRecycleView.setAdapter(myAdapter);
+                            final PhotoRecycleView adapter = new PhotoRecycleView(Profile.this, recyclerViewItems);
+
+                            GridLayoutManager mLayoutManager = new GridLayoutManager(Profile.this, 3);
+                            mLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                                @Override
+                                public int getSpanSize(int position) {
+                                    if(adapter.getItemViewType(position) == 1){
+                                        return 3;
+                                    }else{
+                                        return 1;
+                                    }
+                                }
+                            });
+
+                            mRecycleView.setLayoutManager(mLayoutManager);
+                            mRecycleView.setAdapter(adapter);
+
                         } else {
                             Log.w(TAG, "Error getting documents.", task.getException());
                         }
                     }
                 });
+
     }
 
 
@@ -265,57 +318,6 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }
-
-
-    private void showProfile() {
-        // Download document from Firebase
-        DocumentReference docRef = mDatabase.collection("users").document(uid);
-        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                        mUsernameField.setText((String)document.get("username"));
-                        mBioField.setText((String)document.get("bio"));
-                    } else {
-                        Log.d(TAG, "No such document");
-                    }
-                } else {
-                    Log.d(TAG, "get failed with ", task.getException());
-                }
-            }
-        });
-
-        // Download avatar from Storage
-        String path = uid.concat("/avatar/avatar.png");
-        mStorageRef.child(path).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                // Got the download URL for 'users/me/profile.png'
-                Log.d(TAG,"Got the download URL");
-                RequestOptions options = new RequestOptions();
-                options.centerCrop();
-                options.circleCrop();
-
-                Glide
-                        .with(getApplicationContext())
-                        .load(uri)
-                        .apply(options)
-                        .into(mAvatar);
-
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle any errors
-                Log.d(TAG,"Fail to got the download URL");
-            }
-        });
-
-    }
-
 
 }
 

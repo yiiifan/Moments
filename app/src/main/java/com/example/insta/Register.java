@@ -108,7 +108,6 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                             FirebaseUser user = mAuth.getCurrentUser();
                             uid = user.getUid();
                             saveInfo(mUsernameField.getText().toString(),mBioField.getText().toString());
-                            goProfile();
 //                            updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.
@@ -145,6 +144,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                     @Override
                     public void onSuccess(Void aVoid) {
                         Log.d(TAG, "DocumentSnapshot successfully written!");
+
                     }
 
                 })
@@ -173,6 +173,8 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG, "Upload avatar successfully");
+                goProfile();
+
 
             }
         });
