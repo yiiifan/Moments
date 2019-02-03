@@ -47,6 +47,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -136,6 +137,20 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        checkAuth();
+    }
+
+    private void checkAuth() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser == null){
+            goWelcome();
+        }
+    }
+
+    @Override
     public void onClick(View v) {
         int i = v.getId();
         if (i == R.id.btn_menu) {
@@ -215,7 +230,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
 
         // Download all photos
         mDatabase.collection("users").document(uid).collection("Photos")
-                .orderBy("timestamp")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override

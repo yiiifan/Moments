@@ -15,6 +15,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -24,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -87,21 +90,30 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
     }
 
     @Override
-    public void onClick(View v) {
-        int i = v.getId();
-        if(i == R.id.signup){
-            String mPassword = mPasswordField.getText().toString();
-            String mComfirm = mComfirmField.getText().toString();
+    public void onStart() {
+        super.onStart();
+        checkAuth();
+    }
 
-            if(mPassword.equals(mComfirm)) {
-                createAccount(mEmailField.getText().toString(), mPassword);
-            }else{
-                showToast(v, "Password doesn't match");
-            }
+    private void checkAuth() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser != null){
+            goProfile();
         }
     }
 
-    private void createAccount(String email, String password) {
+    @Override
+    public void onClick(View v) {
+        int i = v.getId();
+        if(i == R.id.signup){
+            createAccount(v, mEmailField.getText().toString(), mPasswordField.getText().toString());
+        }
+    }
+
+    private void createAccount(View v, String email, String password) {
+        if (!validateForm(v)) {
+            return;
+        }
         Log.d(TAG, "createAccount:" + email);
 
         mAuth.createUserWithEmailAndPassword(email, password)
@@ -115,13 +127,11 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                             assert user != null;
                             uid = user.getUid();
                             saveInfo(mUsernameField.getText().toString(),mBioField.getText().toString());
-//                            updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(Register.this, "Authentication failed.",
+                            Toast.makeText(Register.this, task.getException().toString(),
                                     Toast.LENGTH_SHORT).show();
-//                            updateUI(null);
                         }
                     }
 
@@ -129,7 +139,37 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                 });
     }
 
-    private void saveInfo(String username, String bio) {
+    private void saveInfo(final String username, final String bio) {
+
+        // Save avatar in storage
+        String path = uid.concat("/avatar/avatar.png");
+
+        StorageReference storageRef = mStorage.getReference();
+        final StorageReference avatarRef = storageRef.child(path);
+
+        avatarRef.putBytes(byteArray)
+                .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        if(task.isSuccessful()){
+
+                            avatarRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    String downloadUrl = uri.toString();
+                                    saveFirestore(downloadUrl, username, bio);
+
+                                }
+                            });
+
+                        }else{
+                            Toast.makeText(Register.this,"Your picture did NOT saved",Toast.LENGTH_SHORT) .show();
+                        }
+                    }
+                });
+    }
+
+    private void saveFirestore(String downloadUrl, String username, String bio) {
 
         // Save username and bio in Firestore
         FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
@@ -139,6 +179,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
         Map<String, Object> user = new HashMap<>();
         user.put("username", username);
         user.put("bio", bio);
+        user.put("avatar", downloadUrl);
 
         mDatabase.collection("users")
                 .document(uid)
@@ -147,6 +188,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                     @Override
                     public void onSuccess(Void aVoid) {
                         Log.d(TAG, "DocumentSnapshot successfully written!");
+                        goProfile();
 
                     }
 
@@ -158,34 +200,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                     }
                 });
 
-
-        // Save avatar in storage
-        String path = uid.concat("/avatar/avatar.png");
-
-        StorageReference storageRef = mStorage.getReference();
-        StorageReference avatarRef = storageRef.child(path);
-
-        UploadTask uploadTask = avatarRef.putBytes(byteArray);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
-                Log.w(TAG, "Error adding document", exception);
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG, "Upload avatar successfully");
-                goProfile();
-            }
-        });
     }
-
-    private void goProfile(){
-        Intent intent = new Intent(this, Profile.class);
-        startActivity(intent);
-    }
-
 
     public void camera(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -208,6 +223,62 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
             imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
             byteArray = stream.toByteArray();
         }
+    }
+
+    private void goProfile(){
+        Intent intent = new Intent(this, Profile.class);
+        startActivity(intent);
+    }
+
+    private boolean validateForm(View v) {
+        boolean valid = true;
+
+        if(byteArray == null){
+            showToast(v, "Avatar is required");
+            valid = false;
+        }
+
+        String mEmail = mEmailField.getText().toString();
+        if (TextUtils.isEmpty(mEmail)) {
+            mEmailField.setError("Required.");
+            valid = false;
+        } else {
+            mEmailField.setError(null);
+        }
+
+        String mPassword = mPasswordField.getText().toString();
+        if (TextUtils.isEmpty(mPassword)) {
+            mPasswordField.setError("Required.");
+            valid = false;
+        } else {
+            mPasswordField.setError(null);
+        }
+
+        String mComfirm = mComfirmField.getText().toString();
+        if (!mPassword.equals(mComfirm)) {
+            mComfirmField.setError("Not match.");
+            valid = false;
+        } else {
+            mComfirmField.setError(null);
+        }
+
+        String mUsername = mUsernameField.getText().toString();
+        if (TextUtils.isEmpty(mUsername)) {
+            mUsernameField.setError("Required.");
+            valid = false;
+        } else {
+            mUsernameField.setError(null);
+        }
+
+        String mBio = mBioField.getText().toString();
+        if (TextUtils.isEmpty(mBio)) {
+            mBioField.setError("Required.");
+            valid = false;
+        } else {
+            mBioField.setError(null);
+        }
+
+        return valid;
     }
 
     public void showToast(View view, String message) {

@@ -46,8 +46,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onStart() {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
+        checkAuth();
+    }
+
+    private void checkAuth() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        updateUI(currentUser);
+        if(currentUser != null){
+            goProfile();
+        }
     }
 
 
@@ -76,7 +82,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            updateUI(user);
                             goProfile();
 
                         } else {
@@ -84,15 +89,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
                             Toast.makeText(MainActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
-                            updateUI(null);
                         }
-
-//                        // [START_EXCLUDE]
-//                        if (!task.isSuccessful()) {
-//                            mStatusTextView.setText(R.string.auth_failed);
-//                        }
-//                        hideProgressDialog();
-//                        // [END_EXCLUDE]
                     }
                 });
     }
@@ -105,29 +102,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void goRegister() {
         Intent intent = new Intent(this, Register.class);
         startActivity(intent);
-    }
-
-    private void updateUI(FirebaseUser user) {
-        // If a user is signed in
-//        if (user != null) {
-//            mStatusTextView.setText(getString(R.string.emailpassword_status_fmt,
-//                    user.getEmail(), user.isEmailVerified()));
-//            mDetailTextView.setText(getString(R.string.firebase_status_fmt, user.getUid()));
-//
-//            findViewById(R.id.emailPasswordButtons).setVisibility(View.GONE);
-//            findViewById(R.id.emailPasswordFields).setVisibility(View.GONE);
-//            findViewById(R.id.signedInButtons).setVisibility(View.VISIBLE);
-//
-//            findViewById(R.id.verifyEmailButton).setEnabled(!user.isEmailVerified());
-//        } else {
-//            mStatusTextView.setText(R.string.signed_out);
-//            mDetailTextView.setText(null);
-//
-//            findViewById(R.id.email).setVisibility(View.VISIBLE);
-//            findViewById(R.id.password).setVisibility(View.VISIBLE);
-//            findViewById(R.id.Login).setVisibility(View.GONE);
-//            findViewById(R.id.signup).setVisibility(View.GONE);
-//        }
     }
 
 
