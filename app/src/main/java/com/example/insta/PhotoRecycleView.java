@@ -118,7 +118,7 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
                     timeView.setText(timeformat(photo.getTimestamp()));
                     locationView.setText(locationformat(photo.getLocation()));
 
-                    FloatingActionButton exit = (FloatingActionButton) PhotoDetail.findViewById(R.id.detail_exit);
+                    TextView exit = (TextView) PhotoDetail.findViewById(R.id.detail_exit);
                     exit.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {

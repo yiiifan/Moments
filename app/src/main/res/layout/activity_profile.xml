@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#DDF0F4"
+    android:background="#1B1D17"
     android:orientation="vertical"
     tools:context=".Profile">
 
@@ -27,7 +27,7 @@
             android:layout_gravity="center"
             android:layout_margin="16dp"
             android:layout_marginRight="20dp"
-            android:backgroundTint="#57B0C7"
+            android:backgroundTint="#16918F"
             app:fabSize="mini"
             app:srcCompat="@drawable/icon_camera" />
 
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="16dp"
-            android:backgroundTint="#57B0C7"
+            android:backgroundTint="#16918F"
             app:fabSize="mini"
             app:srcCompat="@drawable/icon_folder" />
 
@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="16dp"
-            android:backgroundTint="#BF406C"
+            android:backgroundTint="#8D0E1E"
             app:fabSize="mini"
             app:srcCompat="@drawable/icon_exit" />
 
@@ -57,9 +57,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            android:backgroundTint="#57B0C7"
+            android:backgroundTint="#16918F"
             app:fabSize="normal"
-            app:srcCompat="@drawable/icon_menu1" />
+            app:srcCompat="@drawable/icon_menu1"/>
 
 
     </LinearLayout>
