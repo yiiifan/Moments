@@ -2,6 +2,12 @@ package com.example.insta;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -46,15 +52,13 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
     private EditText mPasswordField;
     private EditText mUsernameField;
     private EditText mBioField;
+    private EditText mComfirmField;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mDatabase;
     private FirebaseStorage mStorage;
 
     private String uid;
-
-    public static final String username  = "Ivana";
-    public static final String bio = "Hello world!";
     static final int REQUEST_IMAGE_CAPTURE = 1;
 
     private ImageButton button;
@@ -68,6 +72,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
         //Views
         mEmailField = findViewById(R.id.email);
         mPasswordField = findViewById(R.id.password);
+        mComfirmField = findViewById(R.id.password_confirm);
         mUsernameField = findViewById(R.id.username);
         mBioField = findViewById(R.id.bio);
 
@@ -85,18 +90,19 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
     public void onClick(View v) {
         int i = v.getId();
         if(i == R.id.signup){
-            Log.d(TAG,"onclick");
-            createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
+            String mPassword = mPasswordField.getText().toString();
+            String mComfirm = mComfirmField.getText().toString();
+
+            if(mPassword.equals(mComfirm)) {
+                createAccount(mEmailField.getText().toString(), mPassword);
+            }else{
+                showToast(v, "Password doesn't match");
+            }
         }
     }
 
     private void createAccount(String email, String password) {
         Log.d(TAG, "createAccount:" + email);
-//        if (!validateForm()) {
-//            return;
-//        }
-
-//        showProgressDialog();
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -106,6 +112,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "createUserWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
+                            assert user != null;
                             uid = user.getUid();
                             saveInfo(mUsernameField.getText().toString(),mBioField.getText().toString());
 //                            updateUI(user);
@@ -116,10 +123,6 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
                                     Toast.LENGTH_SHORT).show();
 //                            updateUI(null);
                         }
-
-//                        // [START_EXCLUDE]
-//                        hideProgressDialog();
-//                        // [END_EXCLUDE]
                     }
 
 
@@ -174,8 +177,6 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG, "Upload avatar successfully");
                 goProfile();
-
-
             }
         });
     }
@@ -185,24 +186,6 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
         startActivity(intent);
     }
 
-
-    public void profile(View view) {
-        Intent intent = new Intent(this, Profile.class);
-        String username_string = mUsernameField.getText().toString();
-        String bio_string = mBioField.getText().toString();
-        if(byteArray == null){
-            showToast(view, "Please upload your photo");
-        }else if(username_string.length() == 0){
-            showToast(view, "Please fill your username");
-        }else if(bio_string.length() == 0){
-            showToast(view, "Please fill your short bio");
-        }else {
-            intent.putExtra(username, username_string);
-            intent.putExtra(bio, bio_string);
-            intent.putExtra("image", byteArray);
-            startActivity(intent);
-        }
-    }
 
     public void camera(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -215,8 +198,10 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
+            assert extras != null;
             Bitmap imageBitmap = (Bitmap) extras.get("data");
-            button.setImageBitmap(imageBitmap);
+            Bitmap scaleBitmap = Bitmap.createScaledBitmap(imageBitmap, 350, 350, true);
+            button.setImageBitmap(scaleBitmap);
 
             //Convert to byte array
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -234,6 +219,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
         toastView.addView(imageCodeProject, 0);
         toast.show();
     }
+
 
 
 }

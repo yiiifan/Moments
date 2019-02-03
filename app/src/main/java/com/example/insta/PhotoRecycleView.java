@@ -1,10 +1,14 @@
 package com.example.insta;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.media.Image;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +18,20 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
+
 
 public class PhotoRecycleView extends RecyclerView.Adapter{
     private static final String TAG = "Recycle";
@@ -84,19 +101,49 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
             PhotoHolder.photo_item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(mContext, PhotoDetail.class);
 
-                    // Passing data to the Detail activity
-                    intent.putExtra("PhotoUrl", photo.getUrl().toString());
-                    intent.putExtra("desc", "Photo information");
-                    intent.putExtra("location", photo.getLocation());
-                    intent.putExtra("timestamp", photo.getTimestamp());
+                    final Dialog PhotoDetail = new Dialog(mContext);
+                    PhotoDetail.setContentView(R.layout.popup_detail);
+                    ImageView photoView = (ImageView) PhotoDetail.findViewById(R.id.detail_view);
+                    TextView descView = (TextView) PhotoDetail.findViewById(R.id.detail_desc);
+                    TextView timeView = (TextView) PhotoDetail.findViewById(R.id.detail_time);
+                    TextView locationView = (TextView) PhotoDetail.findViewById(R.id.detail_location);
 
-                    // Start the activity
-                    mContext.startActivity(intent);
+                    Glide.with(mContext)
+                            .load(photo.getUrl())
+                            .into(photoView);
+
+                    PhotoDetail.show();
+                    descView.setText(photo.getDescription());
+                    timeView.setText(timeformat(photo.getTimestamp()));
+                    locationView.setText(locationformat(photo.getLocation()));
+
+                    FloatingActionButton exit = (FloatingActionButton) PhotoDetail.findViewById(R.id.detail_exit);
+                    exit.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            PhotoDetail.dismiss();
+                        }
+                    });
+
                 }
             });
         }
+    }
+
+    private String locationformat(String location){
+        return "Location: "+ location;
+    }
+
+    private String timeformat(String description) {
+        String year = description.substring(0,4);
+        String month = description.substring(4,6);
+        String day = description.substring(6,8);
+        String hour = description.substring(9,11);
+        String minute = description.substring(11,13);
+        String second = description.substring(13,15);
+
+        return year+"-"+month+"-"+day+" "+hour+":"+minute+":"+second;
     }
 
     @Override

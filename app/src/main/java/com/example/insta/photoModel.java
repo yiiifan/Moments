@@ -7,16 +7,26 @@ public class photoModel extends RecyclerViewItem{
     private String url;
     private String location;
     private String timestamp;
+    private String description;
 
     public photoModel() {
 
     }
 
-    public photoModel(String pID, String url, String location, String timestamp) {
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public photoModel(String pID, String url, String location, String timestamp, String description) {
         this.pID = pID;
         this.url = url;
         this.location = location;
         this.timestamp = timestamp;
+        this.description = description;
     }
 
     public String getpID() {

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".Preview">
+
+    <ImageView
+        android:id="@+id/preview_photo"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_margin="16dp"
+        app:srcCompat="@color/fui_bgAnonymous" />
+
+
+    <EditText
+        android:id="@+id/preview_desc"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_margin="16dp"
+        android:padding="20dp"
+        android:hint="Say something..."
+        android:gravity="top"
+        android:ems="10"
+        android:inputType="textMultiLine"
+        android:lines="@android:integer/config_longAnimTime"
+        android:singleLine="false"
+        android:background="@drawable/border"/>
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/preview_post"
+            android:layout_width="115dp"
+            android:layout_height="53dp"
+            android:layout_marginStart="44dp"
+            android:background="@drawable/button2"
+            android:text="Post"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <Button
+            android:id="@+id/preview_cancel"
+            android:layout_width="115dp"
+            android:layout_height="53dp"
+            android:layout_marginEnd="44dp"
+            android:background="@drawable/button3"
+            android:text="Cancel"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
+
+
+    </android.support.constraint.ConstraintLayout>
+
+
+</LinearLayout>
