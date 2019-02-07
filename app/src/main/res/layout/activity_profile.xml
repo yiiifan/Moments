@@ -11,7 +11,9 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/gallery"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        app:layout_anchor="@+id/linear"
+        app:layout_anchorGravity="top|center" />
 
     <LinearLayout
         android:id="@+id/linear"
@@ -19,6 +21,15 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
         android:orientation="vertical">
+
+        <Switch
+            android:id="@+id/btn_Switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColorHint="#ffff"
+            android:textOff="Profile"
+            android:textOn="Global"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/btn_camera"

@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Environment;
@@ -15,7 +14,6 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -25,19 +23,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.widget.Adapter;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 
-
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -52,12 +42,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -65,12 +53,16 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 
-public class Profile extends AppCompatActivity implements View.OnClickListener{
+public class Profile extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
     public static final String TAG  = "Profile";
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int CAMERA_REQUEST_CODE = 1;
     private static final int REQUEST_LOCATION = 3;
     private static final int PICK_IMAGE = 2;
+    private static final int PROFILE = 0;
+    private static final int GL0BAL = 1;
+
+    private int tag;
 
     private String username;
     private String bio;
@@ -91,6 +83,8 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
     private FloatingActionButton mCamera;
     private FloatingActionButton mFolder;
     private FloatingActionButton mLogout;
+
+    private Switch mSwitch;
 
     LocationManager locationManager;
     String mLocation;
@@ -132,8 +126,26 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         FirebaseUser user = mAuth.getCurrentUser();
         uid = user.getUid();
 
-        initRecyclerView();
+        mSwitch = findViewById(R.id.btn_Switch);
+        mSwitch.setOnCheckedChangeListener(this);
 
+        initRecyclerView(PROFILE);
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        switch (buttonView.getId()){
+            case R.id.btn_Switch:
+                if(buttonView.isChecked()){
+                    Toast.makeText(this,"开关:ON",Toast.LENGTH_SHORT).show();
+                    initRecyclerView(PROFILE);
+                }
+                else{
+                    Toast.makeText(this,"开关:OFF",Toast.LENGTH_SHORT).show();
+                    initRecyclerView(GL0BAL);
+                }
+                break;
+        }
     }
 
     @Override
@@ -178,7 +190,8 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         }
     }
 
-    private void initRecyclerView() {
+
+    private void initRecyclerView(final int flag) {
 
         //Download username and bio
         DocumentReference docRef = mDatabase.collection("users").document(uid);
@@ -191,7 +204,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
                         Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                         username = (String)document.get("username");
                         bio = (String)document.get("bio");
-                        downloadAvatar();
+                        downloadAvatar(flag);
                     } else {
                         Log.d(TAG, "No such document");
                     }
@@ -202,7 +215,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         });
     }
 
-    private void downloadAvatar() {
+    private void downloadAvatar(final int flag) {
 
         // Download avatar from Storage
         String path = uid.concat("/avatar/avatar.png");
@@ -212,7 +225,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
                 // Got the download URL for 'users/me/profile.png'
                 Log.d(TAG,"Got the download URL");
                 avatar = uri.toString();
-                downloadPhoto();
+                downloadPhoto(flag);
 
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -224,50 +237,81 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         });
     }
 
-    private void downloadPhoto() {
+    private void downloadPhoto(int tag) {
 
         final List<RecyclerViewItem> recyclerViewItems = new ArrayList<>();
 
-        // Download all photos
-        mDatabase.collection("users").document(uid).collection("Photos")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
+        if(tag == PROFILE){
+            mDatabase.collection("photos")
+                    .whereEqualTo("uID",uid)
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
 
-                            Header header = new Header(username, bio, avatar);
-                            recyclerViewItems.add(header);
+                                Header header = new Header(username, bio, avatar);
+                                recyclerViewItems.add(header);
 
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                Log.d(TAG, document.getId() + " => " + document.getData());
-                                photoModel model = new photoModel(document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
-                                recyclerViewItems.add(model);
-                            }
-
-                            final PhotoRecycleView adapter = new PhotoRecycleView(Profile.this, recyclerViewItems);
-
-                            GridLayoutManager mLayoutManager = new GridLayoutManager(Profile.this, 3);
-                            mLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-                                @Override
-                                public int getSpanSize(int position) {
-                                    if(adapter.getItemViewType(position) == 1){
-                                        return 3;
-                                    }else{
-                                        return 1;
-                                    }
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d(TAG, document.getId() + " => " + document.getData());
+                                    photoModel model = new photoModel(document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
+                                    recyclerViewItems.add(model);
                                 }
-                            });
 
-                            mRecycleView.setLayoutManager(mLayoutManager);
-                            mRecycleView.setAdapter(adapter);
+                                final PhotoRecycleView adapter = new PhotoRecycleView(Profile.this, recyclerViewItems);
 
-                        } else {
-                            Log.w(TAG, "Error getting documents.", task.getException());
+                                GridLayoutManager mLayoutManager = new GridLayoutManager(Profile.this, 3);
+                                mLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                                    @Override
+                                    public int getSpanSize(int position) {
+                                        if(adapter.getItemViewType(position) == 1){
+                                            return 3;
+                                        }else{
+                                            return 1;
+                                        }
+                                    }
+                                });
+
+                                mRecycleView.setLayoutManager(mLayoutManager);
+                                mRecycleView.setAdapter(adapter);
+
+                            } else {
+                                Log.w(TAG, "Error getting documents.", task.getException());
+                            }
                         }
-                    }
-                });
+                    });
+
+        }else if(tag == GL0BAL){
+            mDatabase.collection("photos")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d(TAG, document.getId() + " => " + document.getData());
+                                    GlobalPhotoHolder model = new GlobalPhotoHolder(uid, document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
+                                    recyclerViewItems.add(model);
+                                }
+
+                                final PhotoRecycleView adapter = new PhotoRecycleView(Profile.this, recyclerViewItems);
+
+                                GridLayoutManager mLayoutManager = new GridLayoutManager(Profile.this, 1);
+
+                                mRecycleView.setLayoutManager(mLayoutManager);
+                                mRecycleView.setAdapter(adapter);
+
+                            } else {
+                                Log.w(TAG, "Error getting documents.", task.getException());
+                            }
+                        }
+                    });
+        }
+
     }
 
 
@@ -418,5 +462,10 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         startActivity(intent);
     }
 
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
 }
 

@@ -9,8 +9,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Switch;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -23,14 +26,21 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.ml.vision.FirebaseVision;
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
+import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
+import com.google.firebase.ml.vision.label.FirebaseVisionOnDeviceImageLabelerOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class Preview extends AppCompatActivity {
+public class Preview extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
     final private String TAG = "Preview";
 
     private FirebaseAuth mAuth;
@@ -47,6 +57,7 @@ public class Preview extends AppCompatActivity {
     private EditText mDesc;
     private Button mPost;
     private Button mCancel;
+    private Switch mSwitch;
 
     private String mUID;
     private String description;
@@ -77,12 +88,15 @@ public class Preview extends AppCompatActivity {
         FirebaseUser user = mAuth.getCurrentUser();
         mUID = user.getUid();
 
+        mSwitch = findViewById(R.id.auto_caption);
+        mSwitch.setOnCheckedChangeListener(this);
+
         mPost = findViewById(R.id.preview_post);
         mPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 description = mDesc.getText().toString();
-                uploadPhoto(mUID, photoUri, location, timestamp, description);
+                uploadPhoto();
             }
         });
 
@@ -97,10 +111,10 @@ public class Preview extends AppCompatActivity {
         });
     }
 
-    private void uploadPhoto(String uid, Uri photoURI, final String location, final String timestamp, String post) {
-        String imgpath = uid.concat("/Photos");
-        final StorageReference ref = mStorageRef.child(imgpath).child(photoURI.getLastPathSegment());
-        UploadTask uploadTask = ref.putFile(photoURI);
+    private void uploadPhoto() {
+        String imgpath = mUID.concat("/Photos");
+        final StorageReference ref = mStorageRef.child(imgpath).child(photoUri.getLastPathSegment());
+        UploadTask uploadTask = ref.putFile(photoUri);
 
         uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
             @Override
@@ -116,7 +130,7 @@ public class Preview extends AppCompatActivity {
             public void onComplete(@NonNull Task<Uri> task) {
                 if (task.isSuccessful()) {
                     downloadUri = task.getResult();
-                    savePhotoInfo(downloadUri, description, location, timestamp);
+                    savePhotoInfo();
                 } else {
 
                 }
@@ -124,15 +138,16 @@ public class Preview extends AppCompatActivity {
         });
     }
 
-    private void savePhotoInfo(Uri imgURL, String desc, String mLocation, String timestamp) {
+    private void savePhotoInfo() {
 
         Map<String, Object> photo = new HashMap<>();
-        photo.put("url", imgURL.toString());
-        photo.put("desc", desc);
-        photo.put("location", mLocation);
+        photo.put("uID", mUID);
+        photo.put("url", downloadUri.toString());
+        photo.put("desc", description);
+        photo.put("location", location);
         photo.put("timestamp", timestamp);
 
-        String path = "users/" + mUID + "/Photos";
+        String path = "photos";
 
         mDatabase.collection(path)
                 .add(photo)
@@ -150,5 +165,53 @@ public class Preview extends AppCompatActivity {
                         Log.w(TAG, "Error adding document", e);
                     }
                 });
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        switch (buttonView.getId()){
+            case R.id.auto_caption:
+                if(buttonView.isChecked()){
+                    Toast.makeText(this,"开关:ON",Toast.LENGTH_SHORT).show();
+                    FirebaseVisionImage image;
+                    try {
+                        image = FirebaseVisionImage.fromFilePath(this, photoUri);
+
+                        // set the minimum confidence required:
+                        FirebaseVisionOnDeviceImageLabelerOptions options =
+                                new FirebaseVisionOnDeviceImageLabelerOptions.Builder()
+                                        .setConfidenceThreshold(0.7f)
+                                        .build();
+                        FirebaseVisionImageLabeler labeler = FirebaseVision.getInstance()
+                                .getOnDeviceImageLabeler(options);
+
+                        labeler.processImage(image)
+                                .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionImageLabel>>() {
+                                    @Override
+                                    public void onSuccess(List<FirebaseVisionImageLabel> labels) {
+                                        for (FirebaseVisionImageLabel label: labels) {
+                                            String labelText = "#"+label.getText()+"#";
+                                            description = mDesc.getText().toString();
+                                            mDesc.setText(description.concat(labelText));
+                                        }
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else{
+                    Toast.makeText(this,"开关:OFF",Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
     }
 }
