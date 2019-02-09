@@ -23,6 +23,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -60,6 +62,7 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mDatabase;
+    private RecyclerView mComment;
 
     public PhotoRecycleView(Context mContext, List<RecyclerViewItem> recyclerViewItems) {
         this.mContext = mContext;
@@ -89,6 +92,7 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
         RecyclerViewItem recyclerViewItem = recyclerViewItems.get(position);
 
         if(holder instanceof HeaderHolder) {
@@ -109,21 +113,34 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
 
         }else if(holder instanceof PhotoHolder){
 
-            PhotoHolder PhotoHolder = (PhotoHolder) holder;
+            final PhotoHolder photoHolder = (PhotoHolder) holder;
             final photoModel photo = (photoModel) recyclerViewItem;
 
             Glide.with(mContext)
                     .load(photo.getUrl())
-                    .into(PhotoHolder.photo_download);
+                    .into(photoHolder.photo_download);
 
             //Set click listener
-            PhotoHolder.photo_item.setOnClickListener(new View.OnClickListener() {
+            photoHolder.photo_item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
-                    final Dialog PhotoDetail = new Dialog(mContext);
+                    photoHolder.photo_download.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
 
-//                    initComments();
+                            Intent intent = new Intent(mContext, Comments.class);
+                            intent.putExtra("uID",photo.getuID());
+                            intent.putExtra("pID",photo.getpID());
+                            intent.putExtra("Url",photo.getUrl().toString());
+                            intent.putExtra("caption",photo.getDescription());
+                            intent.putExtra("timestamp",photo.getTimestamp());
+                            intent.putExtra("location", photo.getLocation());
+
+                            mContext.startActivity(intent);
+
+                        }
+                    });
 
 //                    final Dialog PhotoDetail = new Dialog(mContext);
 //                    PhotoDetail.setContentView(R.layout.popup_detail);
@@ -153,29 +170,31 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
             });
 
         }else if(holder instanceof GlobalHolder){
-            GlobalHolder globalHolder = (GlobalHolder) holder;
+            final GlobalHolder globalHolder = (GlobalHolder) holder;
             final GlobalPhotoHolder photo = (GlobalPhotoHolder) recyclerViewItem;
 
             Glide.with(mContext)
                     .load(photo.getUrl())
                     .into(globalHolder.photo_download);
 
+            globalHolder.photo_item.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    Intent intent = new Intent(mContext, Comments.class);
+                    intent.putExtra("uID",photo.getuID());
+                    intent.putExtra("pID",photo.getpID());
+                    intent.putExtra("Url",photo.getUrl());
+                    intent.putExtra("caption",photo.getDescription());
+                    intent.putExtra("timestamp",photo.getTimestamp());
+                    intent.putExtra("location", photo.getLocation());
+
+                    mContext.startActivity(intent);
+
+                }
+            });
+
         }
-    }
-
-    private String locationformat(String location){
-        return "Location: "+ location;
-    }
-
-    private String timeformat(String description) {
-        String year = description.substring(0,4);
-        String month = description.substring(4,6);
-        String day = description.substring(6,8);
-        String hour = description.substring(9,11);
-        String minute = description.substring(11,13);
-        String second = description.substring(13,15);
-
-        return year+"-"+month+"-"+day+" "+hour+":"+minute+":"+second;
     }
 
     @Override
@@ -244,8 +263,22 @@ public class PhotoRecycleView extends RecyclerView.Adapter{
             profile_avatar = itemView.findViewById(R.id.profile_avatar);
             profile_username = itemView.findViewById(R.id.profile_username);
             profile_bio = itemView.findViewById(R.id.profile_bio);
-            profile_switch = itemView.findViewById(R.id.profile_switch);
         }
+    }
+
+    private String locationformat(String location){
+        return "Location: "+ location;
+    }
+
+    private String timeformat(String description) {
+        String year = description.substring(0,4);
+        String month = description.substring(4,6);
+        String day = description.substring(6,8);
+        String hour = description.substring(9,11);
+        String minute = description.substring(11,13);
+        String second = description.substring(13,15);
+
+        return year+"-"+month+"-"+day+" "+hour+":"+minute+":"+second;
     }
 
 

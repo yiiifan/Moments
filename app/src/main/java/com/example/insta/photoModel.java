@@ -3,6 +3,7 @@ package com.example.insta;
 import android.net.Uri;
 
 public class photoModel extends RecyclerViewItem{
+    private String uID;
     private String pID;
     private String url;
     private String location;
@@ -21,12 +22,21 @@ public class photoModel extends RecyclerViewItem{
         this.description = description;
     }
 
-    public photoModel(String pID, String url, String location, String timestamp, String description) {
+    public photoModel(String uID, String pID, String url, String location, String timestamp, String description) {
+        this.uID = uID;
         this.pID = pID;
         this.url = url;
         this.location = location;
         this.timestamp = timestamp;
         this.description = description;
+    }
+
+    public String getuID() {
+        return uID;
+    }
+
+    public void setuID(String uID) {
+        this.uID = uID;
     }
 
     public String getpID() {

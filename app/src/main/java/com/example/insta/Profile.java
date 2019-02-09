@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
@@ -22,6 +23,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Switch;
@@ -53,7 +55,7 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 
-public class Profile extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+public class Profile extends AppCompatActivity implements View.OnClickListener{
     public static final String TAG  = "Profile";
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int CAMERA_REQUEST_CODE = 1;
@@ -61,8 +63,6 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
     private static final int PICK_IMAGE = 2;
     private static final int PROFILE = 0;
     private static final int GL0BAL = 1;
-
-    private int tag;
 
     private String username;
     private String bio;
@@ -79,12 +79,11 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
     private Uri photoURI;
 
     private RecyclerView mRecycleView;
+
     private FloatingActionButton mMenu;
     private FloatingActionButton mCamera;
     private FloatingActionButton mFolder;
-    private FloatingActionButton mLogout;
-
-    private Switch mSwitch;
+    private BottomNavigationView mNav;
 
     LocationManager locationManager;
     String mLocation;
@@ -101,17 +100,14 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
         mMenu = findViewById(R.id.btn_menu);
         mCamera= findViewById(R.id.btn_camera);
         mFolder= findViewById(R.id.btn_folder);
-        mLogout= findViewById(R.id.btn_logout);
 
         mCamera.hide();
         mFolder.hide();
-        mLogout.hide();
 
         // Button views
         findViewById(R.id.btn_menu).setOnClickListener(this);
         findViewById(R.id.btn_camera).setOnClickListener(this);
         findViewById(R.id.btn_folder).setOnClickListener(this);
-        findViewById(R.id.btn_logout).setOnClickListener(this);
 
         mRecycleView = findViewById(R.id.gallery);
         mRecycleView.setLayoutManager(new LinearLayoutManager(this));
@@ -126,27 +122,33 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
         FirebaseUser user = mAuth.getCurrentUser();
         uid = user.getUid();
 
-        mSwitch = findViewById(R.id.btn_Switch);
-        mSwitch.setOnCheckedChangeListener(this);
-
         initRecyclerView(PROFILE);
+
+        mNav = findViewById(R.id.nav);
+        mNav.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()){
+                    case R.id.nav_home:
+                        initRecyclerView(PROFILE);
+                        break;
+
+                    case R.id.nav_explore:
+                        initRecyclerView(GL0BAL);
+                        break;
+
+                    case R.id.nav_logout:
+                        FirebaseAuth.getInstance().signOut();
+                        goWelcome();
+
+                }
+                return true;
+            }
+        });
+
     }
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        switch (buttonView.getId()){
-            case R.id.btn_Switch:
-                if(buttonView.isChecked()){
-                    Toast.makeText(this,"开关:ON",Toast.LENGTH_SHORT).show();
-                    initRecyclerView(PROFILE);
-                }
-                else{
-                    Toast.makeText(this,"开关:OFF",Toast.LENGTH_SHORT).show();
-                    initRecyclerView(GL0BAL);
-                }
-                break;
-        }
-    }
+
 
     @Override
     public void onStart() {
@@ -166,14 +168,12 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
     public void onClick(View v) {
         int i = v.getId();
         if (i == R.id.btn_menu) {
-            if(mCamera.isShown() && mFolder.isShown() && mLogout.isShown()){
+            if(mCamera.isShown() && mFolder.isShown()){
                 mCamera.hide();
                 mFolder.hide();
-                mLogout.hide();
             }else{
                 mCamera.show();
                 mFolder.show();
-                mLogout.show();
             }
 
         }else if(i == R.id.btn_camera){
@@ -182,11 +182,6 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
         }else if(i == R.id.btn_folder){
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
             startActivityForResult(intent, PICK_IMAGE);
-
-        }else if(i == R.id.btn_logout){
-            FirebaseAuth.getInstance().signOut();
-            goWelcome();
-
         }
     }
 
@@ -256,7 +251,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener, 
 
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     Log.d(TAG, document.getId() + " => " + document.getData());
-                                    photoModel model = new photoModel(document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
+                                    photoModel model = new photoModel(uid, document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
                                     recyclerViewItems.add(model);
                                 }
 
