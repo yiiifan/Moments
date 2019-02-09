@@ -5,7 +5,7 @@
     android:layout_height="360dp"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
     cardview:cardCornerRadius="10dp"
-    android:layout_margin="7dp"
+    android:layout_margin="15dp"
     >
 
     <LinearLayout
@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="center"
-            android:background="#61009688" />
+            android:background="@color/colorPrimary" />
 
     </LinearLayout>
 

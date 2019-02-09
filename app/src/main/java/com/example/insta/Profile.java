@@ -25,8 +25,6 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.Toast;
 
 
@@ -56,34 +54,30 @@ import java.util.List;
 import butterknife.ButterKnife;
 
 public class Profile extends AppCompatActivity implements View.OnClickListener{
-    public static final String TAG  = "Profile";
+
+    public static final String TAG  = "PROFILE";
+
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int CAMERA_REQUEST_CODE = 1;
-    private static final int REQUEST_LOCATION = 3;
     private static final int PICK_IMAGE = 2;
+    private static final int REQUEST_LOCATION = 3;
     private static final int PROFILE = 0;
     private static final int GL0BAL = 1;
+
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore mDatabase;
+    private StorageReference mStorageRef;
 
     private String username;
     private String bio;
     private String avatar;
-
-    private FirebaseAuth mAuth;
-    private FirebaseFirestore mDatabase;
-    private FirebaseStorage mStorage;
-    private StorageReference mStorageRef;
-
-    String mCurrentPhotoPath;
-
     private String uid;
+    String mCurrentPhotoPath;
     private Uri photoURI;
 
     private RecyclerView mRecycleView;
-
-    private FloatingActionButton mMenu;
     private FloatingActionButton mCamera;
     private FloatingActionButton mFolder;
-    private BottomNavigationView mNav;
 
     LocationManager locationManager;
     String mLocation;
@@ -97,7 +91,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION},REQUEST_LOCATION);
 
 
-        mMenu = findViewById(R.id.btn_menu);
+        FloatingActionButton mMenu = findViewById(R.id.btn_menu);
         mCamera= findViewById(R.id.btn_camera);
         mFolder= findViewById(R.id.btn_folder);
 
@@ -116,15 +110,16 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseFirestore.getInstance();
 
-        mStorage = FirebaseStorage.getInstance();
+        FirebaseStorage mStorage = FirebaseStorage.getInstance();
         mStorageRef = mStorage.getReference();
 
         FirebaseUser user = mAuth.getCurrentUser();
+        assert user != null;
         uid = user.getUid();
 
         initRecyclerView(PROFILE);
 
-        mNav = findViewById(R.id.nav);
+        BottomNavigationView mNav = findViewById(R.id.nav);
         mNav.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -140,12 +135,10 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
                     case R.id.nav_logout:
                         FirebaseAuth.getInstance().signOut();
                         goWelcome();
-
                 }
                 return true;
             }
         });
-
     }
 
 
@@ -188,7 +181,6 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
 
     private void initRecyclerView(final int flag) {
 
-        //Download username and bio
         DocumentReference docRef = mDatabase.collection("users").document(uid);
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -251,7 +243,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
 
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     Log.d(TAG, document.getId() + " => " + document.getData());
-                                    photoModel model = new photoModel(uid, document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
+                                    photoModel model = new photoModel(document.getString("uID"), document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
                                     recyclerViewItems.add(model);
                                 }
 
@@ -289,7 +281,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
 
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     Log.d(TAG, document.getId() + " => " + document.getData());
-                                    GlobalPhotoHolder model = new GlobalPhotoHolder(uid, document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
+                                    GlobalPhotoHolder model = new GlobalPhotoHolder(document.getString("uID"), document.getId(), document.getString("url"), document.getString("location"),document.getString("timestamp"),document.getString("desc"));
                                     recyclerViewItems.add(model);
                                 }
 
@@ -325,9 +317,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
 
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
-                        photoFile);
+                photoURI = FileProvider.getUriForFile(this, "com.example.android.fileprovider", photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
 
@@ -348,6 +338,7 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
             intent.putExtra("location", mLocation);
             intent.putExtra("timestamp", timeStamp);
             startActivity(intent);
+
         }else if(requestCode == PICK_IMAGE && resultCode == RESULT_OK){
             Uri localFile = data.getData();
             getLocation();
@@ -457,10 +448,5 @@ public class Profile extends AppCompatActivity implements View.OnClickListener{
         startActivity(intent);
     }
 
-
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-
-    }
 }
 

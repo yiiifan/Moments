@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -32,6 +33,7 @@ import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
 import com.google.firebase.ml.vision.label.FirebaseVisionOnDeviceImageLabelerOptions;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -58,9 +60,11 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
     private Button mPost;
     private Button mCancel;
     private Switch mSwitch;
+    private ProgressBar mProgress;
 
     private String mUID;
     private String description;
+    private Task<Uri> mPhotoTask;
 
 
     @Override
@@ -88,6 +92,9 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
         FirebaseUser user = mAuth.getCurrentUser();
         mUID = user.getUid();
 
+        mProgress = findViewById(R.id.photo_progress);
+        mProgress.setVisibility(View.GONE);
+
         mSwitch = findViewById(R.id.auto_caption);
         mSwitch.setOnCheckedChangeListener(this);
 
@@ -114,7 +121,12 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
     private void uploadPhoto() {
         String imgpath = mUID.concat("/Photos");
         final StorageReference ref = mStorageRef.child(imgpath).child(photoUri.getLastPathSegment());
-        UploadTask uploadTask = ref.putFile(photoUri);
+        UploadTask uploadTask = (UploadTask) ref.putFile(photoUri).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                mProgress.setVisibility(View.VISIBLE);
+            }
+        });
 
         uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
             @Override
@@ -155,6 +167,8 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
                         Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                        mProgress.setVisibility(View.GONE);
+                        Toast.makeText(Preview.this,"Uploaded Success",Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(Preview.this, Profile.class);
                         startActivity(intent);
                     }
@@ -163,6 +177,7 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Log.w(TAG, "Error adding document", e);
+                        Toast.makeText(Preview.this,"Uploaded Failed",Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -172,7 +187,6 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
         switch (buttonView.getId()){
             case R.id.auto_caption:
                 if(buttonView.isChecked()){
-                    Toast.makeText(this,"开关:ON",Toast.LENGTH_SHORT).show();
                     FirebaseVisionImage image;
                     try {
                         image = FirebaseVisionImage.fromFilePath(this, photoUri);
@@ -207,9 +221,6 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-                else{
-                    Toast.makeText(this,"开关:OFF",Toast.LENGTH_SHORT).show();
                 }
                 break;
         }

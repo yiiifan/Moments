@@ -8,10 +8,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
@@ -20,20 +19,24 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private static final String TAG = "Welcome";
+
+    private static final String TAG = "WELCOME";
 
     private FirebaseAuth mAuth;
     private EditText mEmailField;
     private EditText mPasswordField;
+    private ProgressBar mProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(this);
-
         setContentView(R.layout.activity_main);
+
         mEmailField = findViewById(R.id.email);
         mPasswordField = findViewById(R.id.password);
+        mProgress = findViewById(R.id.login_progress);
+        mProgress.setVisibility(View.GONE);
 
         findViewById(R.id.Login).setOnClickListener(this);
         findViewById(R.id.signup).setOnClickListener(this);
@@ -51,9 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void checkAuth() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if(currentUser != null){
-            goProfile();
-        }
+        if(currentUser != null)  goProfile();
     }
 
 
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         int i = v.getId();
         if (i == R.id.Login) {
+            mProgress.setVisibility(View.VISIBLE);
             signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
         } else if (i == R.id.signup) {
             goRegister();
@@ -81,13 +83,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
+                            mProgress.setVisibility(View.GONE);
+                            Toast.makeText(MainActivity.this, "Authentication Success",
+                                    Toast.LENGTH_SHORT).show();
                             goProfile();
 
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(MainActivity.this, "Authentication failed.",
+                            Toast.makeText(MainActivity.this, "Authentication Failed",
                                     Toast.LENGTH_SHORT).show();
                         }
                     }

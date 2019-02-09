@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -109,7 +110,9 @@ class CommentRecycleView extends RecyclerView.Adapter {
                     .apply(options)
                     .into(itemHolder.avatar);
 
-            if(!comment.getuID().equals(mAuth.getUid())){
+            if(comment.getuID().equals(mAuth.getUid()) || comment.getAuthor().equals(mAuth.getUid())){
+                itemHolder.delete.setVisibility(View.VISIBLE);
+            }else{
                 itemHolder.delete.setVisibility(View.GONE);
             }
 
@@ -122,6 +125,7 @@ class CommentRecycleView extends RecyclerView.Adapter {
                                 @Override
                                 public void onSuccess(Void aVoid) {
                                     Log.d(TAG, "DocumentSnapshot successfully deleted!");
+                                    Toast.makeText(mContext, "Comment Deleted", Toast.LENGTH_SHORT).show();
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
@@ -154,6 +158,7 @@ class CommentRecycleView extends RecyclerView.Adapter {
                                 @Override
                                 public void onSuccess(Void aVoid) {
                                     Log.d(TAG, "DocumentSnapshot successfully deleted!");
+                                    Toast.makeText(mContext, "Photo Deleted", Toast.LENGTH_SHORT).show();
                                     Intent intent = new Intent(mContext, Profile.class);
                                     mContext.startActivity(intent);
                                 }
@@ -280,7 +285,6 @@ class CommentRecycleView extends RecyclerView.Adapter {
         ImageView photo;
         TextView caption;
         TextView timestamp;
-        TextView location;
         Button delete;
 
         public MyDetailHolder(View itemView) {

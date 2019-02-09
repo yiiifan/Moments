@@ -6,12 +6,22 @@ public class NewComment extends RecyclerViewItem{
     String pID;
     String content;
     String timestamp;
+    String author;
 
-    public NewComment(String uID, String pID, String content, String timestamp) {
+    public NewComment(String uID, String pID, String author, String content, String timestamp) {
         this.uID = uID;
         this.pID = pID;
+        this.author = author;
         this.content = content;
         this.timestamp = timestamp;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
     }
 
     public String getuID() {

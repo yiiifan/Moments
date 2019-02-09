@@ -40,12 +40,14 @@ public class Comments extends AppCompatActivity {
     private FirebaseStorage mStorage;
     private StorageReference mStorageRef;
 
-    private String uID;
+    private String author;
     private String pID;
     private Uri Url;
     private String caption;
     private String location;
     private String timestamp;
+
+    private String uID;
 
     private RecyclerView mRecycleView;
     private FloatingActionButton mBack;
@@ -60,8 +62,10 @@ public class Comments extends AppCompatActivity {
         mStorage = FirebaseStorage.getInstance();
         mStorageRef = mStorage.getReference();
 
+        uID = mAuth.getUid();
+
         Intent intent = getIntent();
-        uID = intent.getExtras().getString("uID");
+        author = intent.getExtras().getString("author");
         pID = intent.getExtras().getString("pID");
         Url = Uri.parse(intent.getExtras().getString("Url"));
         caption = intent.getExtras().getString("caption");
@@ -128,18 +132,18 @@ public class Comments extends AppCompatActivity {
         final List<RecyclerViewItem> recyclerViewItems = new ArrayList<>();
         mDatabase.collection("comments")
                 .whereEqualTo("pID",pID)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .orderBy("timestamp", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             recyclerViewItems.add(detailHolder);
-                            recyclerViewItems.add(new NewComment(uID, pID, "No content", "No timestamp"));
+                            recyclerViewItems.add(new NewComment(uID, pID, author, "No content", "No timestamp"));
 
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d(TAG, document.getId() + " => " + document.getData());
-                                CommentHolder model = new CommentHolder(document.getId(), document.getString("uID"), document.getString("pID"), document.getString("content"),document.getString("timestamp"), document.getString("avatar"), document.getString("username"));
+                                CommentHolder model = new CommentHolder(document.getId(), document.getString("uID"), document.getString("pID"), author, document.getString("content"),document.getString("timestamp"), document.getString("avatar"), document.getString("username"));
                                 recyclerViewItems.add(model);
                             }
 
