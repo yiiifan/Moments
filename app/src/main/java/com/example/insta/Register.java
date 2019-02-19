@@ -107,6 +107,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener 
 
     private void createAccount(String email, String password) {
         if (!validateForm()) {
+            mProgress.setVisibility(View.GONE);
             return;
         }
 

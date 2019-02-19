@@ -204,7 +204,7 @@ public class Preview extends AppCompatActivity implements CompoundButton.OnCheck
                                     @Override
                                     public void onSuccess(List<FirebaseVisionImageLabel> labels) {
                                         for (FirebaseVisionImageLabel label: labels) {
-                                            String labelText = "#"+label.getText()+"#";
+                                            String labelText = " #"+label.getText()+"";
                                             description = mDesc.getText().toString();
                                             mDesc.setText(description.concat(labelText));
                                         }

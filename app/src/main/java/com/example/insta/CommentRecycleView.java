@@ -1,5 +1,6 @@
 package com.example.insta;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,9 +25,13 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -88,7 +94,14 @@ class CommentRecycleView extends RecyclerView.Adapter {
                     String uID = comment.getuID();
                     String pID = comment.getpID();
                     String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                    loadAuthorInfo(uID, pID, content, timestamp);
+                    if(content.length() != 0) {
+                        loadAuthorInfo(uID, pID, content, timestamp);
+                        hideKeyboard((Activity) mContext);
+
+                    }else{
+                        Toast.makeText(mContext, "Empty Comment", Toast.LENGTH_SHORT).show();
+                    }
+
                 }
             });
 
@@ -158,9 +171,7 @@ class CommentRecycleView extends RecyclerView.Adapter {
                                 @Override
                                 public void onSuccess(Void aVoid) {
                                     Log.d(TAG, "DocumentSnapshot successfully deleted!");
-                                    Toast.makeText(mContext, "Photo Deleted", Toast.LENGTH_SHORT).show();
-                                    Intent intent = new Intent(mContext, Profile.class);
-                                    mContext.startActivity(intent);
+                                    deleteComment(detail.getpID());
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
@@ -178,6 +189,42 @@ class CommentRecycleView extends RecyclerView.Adapter {
         }
 
     }
+
+    private void deleteComment(String pID){
+
+        mDatabase.collection("comments")
+                .whereEqualTo("pID", pID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Log.d(TAG, document.getId() + " => " + document.getData());
+                                document.getReference().delete();
+                            }
+
+                            Toast.makeText(mContext, "Photo Deleted", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(mContext, Profile.class);
+                            mContext.startActivity(intent);
+                        } else {
+                            Log.d(TAG, "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
+    }
+
+    private static void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = activity.getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
 
     private void loadAuthorInfo(final String uID, final String pID, final String content, final String timestamp) {
         DocumentReference docRef = mDatabase.collection("users").document(uID);
