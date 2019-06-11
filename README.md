@@ -1,5 +1,5 @@
 # Moments
-- Moments is a picture sharing app that allows authenticated users to take and share photos, all of which are shared with other users of th app.
+- Moments is a picture sharing app that allows authenticated users to take and share photos, all of which are shared with other users of the app.
 - Using Google's Firebase as server-less backend to handle user authentication and management, and data storing and sharing among users of the app.
 
 
